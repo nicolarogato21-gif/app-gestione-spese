@@ -127,7 +127,16 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess, initialData
                 <div 
                   key={i} 
                   style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: i < suggestions.length - 1 ? '1px solid var(--color-border)' : 'none' }}
-                  onClick={() => { setDescription(s); setSuggestions([]); }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setDescription(s);
+                    setSuggestions([]);
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    setDescription(s);
+                    setSuggestions([]);
+                  }}
                 >
                   {s}
                 </div>
