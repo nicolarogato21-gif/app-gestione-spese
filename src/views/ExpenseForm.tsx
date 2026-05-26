@@ -109,6 +109,12 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess, initialData
             className="form-control" 
             value={description} 
             onChange={(e) => setDescription(e.target.value)}
+            onBlur={() => setTimeout(() => setSuggestions([]), 200)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setSuggestions([]);
+              }
+            }}
             placeholder="Es. Spesa supermercato"
             required
           />
