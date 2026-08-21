@@ -3,6 +3,7 @@ import { useData } from '../context/DataContext';
 import type { Transaction, TransactionType } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { format, parseISO } from 'date-fns';
+import { Repeat } from 'lucide-react';
 
 interface ExpenseFormProps {
   onSuccess: () => void;
@@ -10,7 +11,7 @@ interface ExpenseFormProps {
 }
 
 export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess, initialData }) => {
-  const { categories, paymentMethods, addTransaction, updateTransaction, transactions } = useData();
+  const { categories, paymentMethods, addTransaction, updateTransaction, addRecurringTransaction, transactions } = useData();
   
   const [type, setType] = useState<TransactionType>(initialData?.type || 'spesa');
   const [date, setDate] = useState(initialData?.date ? format(parseISO(initialData.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'));
@@ -19,6 +20,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess, initialData
   const [description, setDescription] = useState(initialData?.description || '');
   const [amount, setAmount] = useState(initialData?.amount?.toString() || '');
   const [notes, setNotes] = useState(initialData?.notes || '');
+  const [isRecurring, setIsRecurring] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
   // Smart autocomplete based on past descriptions
@@ -47,8 +49,10 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess, initialData
       return;
     }
 
+    const transactionId = initialData?.id || uuidv4();
+
     const newTransaction: Transaction = {
-      id: initialData?.id || uuidv4(),
+      id: transactionId,
       date,
       type,
       categoryId,
@@ -62,6 +66,24 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess, initialData
       await updateTransaction(newTransaction);
     } else {
       await addTransaction(newTransaction);
+      
+      // If user opted to make this transaction recurring
+      if (isRecurring) {
+        const day = parseInt(date.slice(8, 10)) || 1;
+        const currentYearMonth = date.slice(0, 7);
+        await addRecurringTransaction({
+          id: uuidv4(),
+          description,
+          amount: numAmount,
+          type,
+          categoryId,
+          paymentMethodId,
+          dayOfMonth: day,
+          active: true,
+          notes,
+          lastGeneratedYearMonth: currentYearMonth
+        });
+      }
     }
     
     onSuccess();
@@ -199,6 +221,21 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess, initialData
           />
         </div>
 
+        {!initialData && (
+          <div className="form-group" style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', margin: 0, fontSize: '0.9rem' }}>
+              <input
+                type="checkbox"
+                checked={isRecurring}
+                onChange={(e) => setIsRecurring(e.target.checked)}
+                style={{ width: '18px', height: '18px' }}
+              />
+              <Repeat size={16} style={{ color: 'var(--color-primary)' }} />
+              <span>Rendi questa {type} <strong>ricorrente ogni mese</strong></span>
+            </label>
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
           <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={onSuccess}>
             Annulla
@@ -211,3 +248,4 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess, initialData
     </div>
   );
 };
+

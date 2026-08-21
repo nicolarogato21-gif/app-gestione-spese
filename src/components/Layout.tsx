@@ -2,22 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { 
   Receipt, 
   PlusCircle, 
+  Repeat,
   Tags, 
   CreditCard, 
   BarChart3,
   Moon,
-  Sun
+  Sun,
+  X,
+  Sparkles
 } from 'lucide-react';
 import { ExpenseList } from '../views/ExpenseList';
 import { ExpenseForm } from '../views/ExpenseForm';
+import { RecurringList } from '../views/RecurringList';
 import { Categories } from '../views/Categories';
 import { PaymentMethods } from '../views/PaymentMethods';
 import { Statistics } from '../views/Statistics';
+import { useData } from '../context/DataContext';
 import type { Transaction } from '../types';
 
-type ViewState = 'list' | 'new' | 'edit' | 'categories' | 'payments' | 'stats';
+type ViewState = 'list' | 'new' | 'edit' | 'recurring' | 'categories' | 'payments' | 'stats';
 
 export const Layout: React.FC = () => {
+  const { newlyGeneratedCount, clearNewlyGeneratedCount } = useData();
   const [activeView, setActiveView] = useState<ViewState>('list');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [darkMode, setDarkMode] = useState(() => {
@@ -41,6 +47,7 @@ export const Layout: React.FC = () => {
       case 'list': return <ExpenseList onEdit={(t) => { setEditingTransaction(t); setActiveView('edit'); }} />;
       case 'new': return <ExpenseForm onSuccess={() => setActiveView('list')} />;
       case 'edit': return <ExpenseForm initialData={editingTransaction} onSuccess={() => { setEditingTransaction(null); setActiveView('list'); }} />;
+      case 'recurring': return <RecurringList />;
       case 'categories': return <Categories />;
       case 'payments': return <PaymentMethods />;
       case 'stats': return <Statistics />;
@@ -53,6 +60,7 @@ export const Layout: React.FC = () => {
       case 'list': return 'Spese e Ricavi';
       case 'new': return 'Nuova Voce';
       case 'edit': return 'Modifica Voce';
+      case 'recurring': return 'Spese Ricorrenti';
       case 'categories': return 'Categorie';
       case 'payments': return 'Metodi di Pagamento';
       case 'stats': return 'Statistiche';
@@ -79,6 +87,32 @@ export const Layout: React.FC = () => {
         </button>
       </header>
 
+      {newlyGeneratedCount > 0 && (
+        <div style={{
+          backgroundColor: 'var(--color-primary)',
+          color: '#ffffff',
+          padding: '0.75rem 1rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '0.875rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Sparkles size={18} />
+            <span>
+              <strong>Generazione Automatica:</strong> Inserite <strong>{newlyGeneratedCount}</strong> spese/ricavi ricorrenti per questo mese!
+            </span>
+          </div>
+          <button 
+            onClick={clearNewlyGeneratedCount}
+            style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            aria-label="Chiudi notifica"
+          >
+            <X size={18} />
+          </button>
+        </div>
+      )}
+
       <main className="main-content">
         {renderView()}
       </main>
@@ -91,6 +125,10 @@ export const Layout: React.FC = () => {
         <a href="#" className={`nav-item ${activeView === 'new' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setActiveView('new'); }}>
           <PlusCircle size={24} />
           <span>Nuova</span>
+        </a>
+        <a href="#" className={`nav-item ${activeView === 'recurring' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setActiveView('recurring'); }}>
+          <Repeat size={24} />
+          <span>Ricorrenti</span>
         </a>
         <a href="#" className={`nav-item ${activeView === 'categories' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setActiveView('categories'); }}>
           <Tags size={24} />
@@ -108,3 +146,4 @@ export const Layout: React.FC = () => {
     </div>
   );
 };
+
